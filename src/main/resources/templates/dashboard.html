@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8"><title>Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f6f9; margin: 0; }
+        .sidebar { width: 250px; background-color: #eef2f7; min-height: 100vh; border-right: 1px solid #dee2e6; position: fixed; }
+        .sidebar .nav-link { color: #333; padding: 15px 20px; font-weight: 500; border-left: 4px solid transparent; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { background-color: #e2e8f0; border-left: 4px solid #0b3d91; color: #0b3d91; }
+        .main-content { margin-left: 250px; padding: 20px; }
+        .topbar { background-color: #0b3d91; color: white; padding: 15px 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;}
+        .card-custom { background: white; border-radius: 12px; padding: 25px; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-left: 5px solid #0b3d91; margin-bottom: 20px;}
+        .member-list { max-height: 200px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <div class="sidebar d-flex flex-column">
+        <div class="p-3 mb-3 border-bottom"><h5 class="fw-bold" style="color: #0b3d91;"><i class="fas fa-cloud"></i> AzureNAS</h5></div>
+        <ul class="nav flex-column">
+            <li class="nav-item"><a class="nav-link active" href="/dashboard"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li class="nav-item"><a class="nav-link" href="/explorador"><i class="fas fa-folder-open"></i> Explorador</a></li>
+            <li class="nav-item"><a class="nav-link" href="/busqueda"><i class="fas fa-search"></i> Búsqueda</a></li>
+            <li class="nav-item"><a class="nav-link" href="/transferencias"><i class="fas fa-exchange-alt"></i> Transferencias</a></li>
+            <li class="nav-item" sec:authorize="hasRole('ADMINISTRADOR')"><a class="nav-link" href="/auditoria"><i class="fas fa-history"></i> Auditoría</a></li>
+            <li class="nav-item" sec:authorize="hasRole('ADMINISTRADOR')"><a class="nav-link" href="/admin"><i class="fas fa-user-shield"></i> Panel Admin</a></li>
+        </ul>
+    </div>
+    <div class="main-content">
+        <div class="topbar">
+            <div><i class="fas fa-bars me-2"></i> Inicio > Dashboard</div>
+            <div>
+                <!-- NOMBRE DE USUARIO BIEN VISIBLE -->
+                <i class="fas fa-user-circle me-1"></i> 
+                <span class="fw-bold me-3" th:if="${usuarioLogueado != null}" th:text="'Hola, ' + ${usuarioLogueado.nombres}">Hola, Usuario</span>
+                <a href="/logout" class="btn btn-outline-light btn-sm">Salir</a>
+            </div>
+        </div>
+        
+        <h4 class="fw-bold mb-4">Panel de Control del Usuario</h4>
+        
+        <div class="row mb-4">
+            <div class="col-md-3"><div class="card-custom"><h6 class="text-muted"><i class="fas fa-folder"></i> File Shares</h6><h2 class="text-primary" th:text="${totalFileShares}">0</h2></div></div>
+            <div class="col-md-3"><div class="card-custom"><h6 class="text-muted"><i class="fas fa-box"></i> Containers</h6><h2 class="text-primary" th:text="${totalContainers}">0</h2></div></div>
+            <div class="col-md-3"><div class="card-custom" style="border-left-color: #198754;"><h6 class="text-muted"><i class="fas fa-hdd"></i> Espacio Usado</h6><h2 class="text-success" th:text="${espacioUsado}">0 MB</h2></div></div>
+            <div class="col-md-3"><div class="card-custom" style="border-left-color: #ffc107;"><h6 class="text-muted"><i class="fas fa-file-upload"></i> Mis Archivos</h6><h2 class="text-warning" th:text="${archivosSubidos}">0</h2></div></div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-5">
+                <div class="card-custom">
+                    <h5 class="fw-bold mb-3">Recursos de Almacenamiento</h5>
+                    <canvas id="storageChart" height="180"></canvas>
+                </div>
+                <div class="card-custom">
+                    <h5 class="fw-bold mb-3"><i class="fas fa-users text-success"></i> Crear Grupo de Trabajo</h5>
+                    <form action="/crear-grupo-usuario" method="POST">
+                        <input type="text" name="nombreGrupo" class="form-control mb-2" placeholder="Nombre del grupo" required>
+                        <label class="fw-bold small text-muted">Invitar a (Opcional):</label>
+                        <select name="usuariosIds" class="form-select mb-3" multiple style="height: 80px;">
+                            <!-- AQUI SE FILTRA AL USUARIO ACTUAL PARA QUE NO SE INVITE A SI MISMO -->
+                            <option th:each="u : ${usuarios}" 
+                                    th:if="${u.id_usuario != usuarioLogueado.id_usuario}"
+                                    th:value="${u.id_usuario}" 
+                                    th:text="${u.nombres + ' (' + u.correo + ')'}"></option>
+                        </select>
+                        <button type="submit" class="btn btn-success w-100">Crear Grupo</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="card-custom h-100" style="border-left-color: #0dcaf0;">
+                    <h5 class="fw-bold mb-3"><i class="fas fa-sitemap text-info"></i> Mis Grupos y Archivos Compartidos</h5>
+                    <div class="accordion" id="accordionGrupos">
+                        <div class="accordion-item" th:each="g, iter : ${misGrupos}">
+                            <h2 class="accordion-header" th:id="'heading' + ${g.id_grupo}">
+                                <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" th:attr="data-bs-target='#collapse' + ${g.id_grupo}">
+                                    <i class="fas fa-folder-open text-warning me-2"></i> <span th:text="${g.nombre}"></span>
+                                </button>
+                            </h2>
+                            <div th:id="'collapse' + ${g.id_grupo}" class="accordion-collapse collapse" th:attr="data-bs-parent='#accordionGrupos'">
+                                <div class="accordion-body">
+                                    <!-- MIEMBROS -->
+                                    <h6 class="fw-bold mt-2"><i class="fas fa-users"></i> Miembros</h6>
+                                    <ul class="list-group mb-3 member-list">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center py-1" th:each="m : ${g.miembros}">
+                                            <span class="small"><i class="fas fa-user-circle me-1"></i> <span th:text="${m.nombres}"></span></span>
+                                            
+                                            <!-- SOLO EL CREADOR O EL ADMIN PUEDEN VER EL BOTÓN DE QUITAR -->
+                                            <form th:if="${(g.creador != null && usuarioLogueado.id_usuario == g.creador.id_usuario) || (usuarioLogueado.rol != null && usuarioLogueado.rol.nombre == 'ADMINISTRADOR')}" 
+                                                  action="/grupo/quitar-miembro" method="POST" class="m-0">
+                                                <input type="hidden" name="grupoId" th:value="${g.id_grupo}">
+                                                <input type="hidden" name="usuarioId" th:value="${m.id_usuario}">
+                                                <button type="submit" class="btn btn-sm text-danger p-0" title="Quitar"><i class="fas fa-user-minus"></i></button>
+                                            </form>
+                                        </li>
+                                    </ul>
+
+                                    <!-- SOLO EL CREADOR O EL ADMIN PUEDEN AÑADIR MIEMBROS -->
+                                    <form th:if="${(g.creador != null && usuarioLogueado.id_usuario == g.creador.id_usuario) || (usuarioLogueado.rol != null && usuarioLogueado.rol.nombre == 'ADMINISTRADOR')}" 
+                                          action="/grupo/agregar-miembro" method="POST" class="d-flex mb-4">
+                                        <input type="hidden" name="grupoId" th:value="${g.id_grupo}">
+                                        <select name="usuarioId" class="form-select form-select-sm me-2" required>
+                                            <option value="" disabled selected>Añadir miembro...</option>
+                                            <!-- FILTRA LOS QUE YA ESTAN EN EL GRUPO Y AL USUARIO ACTUAL -->
+                                            <option th:each="u : ${usuarios}" 
+                                                    th:value="${u.id_usuario}" 
+                                                    th:text="${u.nombres}" 
+                                                    th:if="${!g.miembros.contains(u) && u.id_usuario != usuarioLogueado.id_usuario}"></option>
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-primary">Añadir</button>
+                                    </form>
+
+                                    <!-- ARCHIVOS DEL GRUPO -->
+                                    <h6 class="fw-bold"><i class="fas fa-file-alt"></i> Archivos Compartidos</h6>
+                                    <ul class="list-group mb-3">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center py-1" th:each="file : ${archivosPorGrupo[g.id_grupo]}">
+                                            <span class="small" th:text="${file}"></span>
+                                            <div class="d-flex gap-1">
+                                                <a th:href="@{/grupo/descargar-archivo(grupoId=${g.id_grupo}, nombre=${file}, preview=true)}" target="_blank" class="btn btn-sm btn-outline-info" title="Vista Previa"><i class="fas fa-eye"></i></a>
+                                                <a th:href="@{/grupo/descargar-archivo(grupoId=${g.id_grupo}, nombre=${file})}" class="btn btn-sm btn-outline-primary" title="Descargar"><i class="fas fa-download"></i></a>
+                                                
+                                                <!-- SOLO EL CREADOR O ADMIN PUEDEN ELIMINAR ARCHIVOS -->
+                                                <form th:if="${(g.creador != null && usuarioLogueado.id_usuario == g.creador.id_usuario) || (usuarioLogueado.rol != null && usuarioLogueado.rol.nombre == 'ADMINISTRADOR')}" 
+                                                      action="/grupo/eliminar-archivo" method="POST" class="m-0" onsubmit="return confirm('¿Eliminar?');">
+                                                    <input type="hidden" name="grupoId" th:value="${g.id_grupo}">
+                                                    <input type="hidden" name="nombre" th:value="${file}">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar"><i class="fas fa-trash"></i></button>
+                                                </form>
+                                            </div>
+                                        </li>
+                                        <li class="list-group-item text-muted text-center small" th:if="${#lists.isEmpty(archivosPorGrupo[g.id_grupo])}">No hay archivos en este grupo.</li>
+                                    </ul>
+
+                                    <!-- TODOS PUEDEN SUBIR ARCHIVOS -->
+                                    <form action="/grupo/subir-archivo" method="POST" enctype="multipart/form-data" class="d-flex">
+                                        <input type="hidden" name="grupoId" th:value="${g.id_grupo}">
+                                        <input type="file" name="archivo" class="form-control form-control-sm me-2" required>
+                                        <button type="submit" class="btn btn-sm btn-success"><i class="fas fa-upload"></i> Subir</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <div th:if="${#lists.isEmpty(misGrupos)}" class="text-muted text-center p-3">
+                            No perteneces a ningún grupo aún. Crea uno en la columna izquierda.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const ctx = document.getElementById('storageChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['File Shares', 'Containers', 'Archivos Propios'],
+                datasets: [{
+                    label: 'Cantidad',
+                    data: [3, 2, 5],
+                    backgroundColor: ['#0b3d91', '#0dcaf0', '#198754'],
+                    borderRadius: 5
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+        });
+    </script>
+</body>
+</html>
