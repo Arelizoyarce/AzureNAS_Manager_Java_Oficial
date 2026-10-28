@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8"><title>Panel de Administración</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f6f9; margin: 0; }
+        .sidebar { width: 250px; background-color: #eef2f7; min-height: 100vh; border-right: 1px solid #dee2e6; position: fixed; }
+        .sidebar .nav-link { color: #333; padding: 15px 20px; font-weight: 500; border-left: 4px solid transparent; }
+        .sidebar .nav-link.active { background-color: #e2e8f0; border-left: 4px solid #dc3545; color: #dc3545; }
+        .main-content { margin-left: 250px; padding: 20px; }
+        .topbar { background-color: #dc3545; color: white; padding: 15px 20px; border-radius: 8px; display: flex; justify-content: space-between; margin-bottom: 20px;}
+        .card { border-radius: 12px; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px;}
+    </style>
+</head>
+<body>
+    <div class="sidebar d-flex flex-column">
+        <div class="p-3 mb-3 border-bottom"><h5 class="fw-bold" style="color: #0b3d91;"><i class="fas fa-cloud"></i> AzureNAS</h5></div>
+        <ul class="nav flex-column">
+            <li class="nav-item"><a class="nav-link" href="/dashboard"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li class="nav-item"><a class="nav-link" href="/explorador"><i class="fas fa-folder-open"></i> Explorador</a></li>
+            <li class="nav-item"><a class="nav-link" href="/auditoria"><i class="fas fa-history"></i> Auditoría</a></li>
+            <li class="nav-item" sec:authorize="hasRole('ADMINISTRADOR')"><a class="nav-link active" href="/admin"><i class="fas fa-user-shield"></i> Panel Admin</a></li>
+        </ul>
+    </div>
+    <div class="main-content">
+        <div class="topbar"><div><i class="fas fa-user-shield"></i> Centro de Administración Global</div><div><a href="/logout" class="btn btn-outline-light btn-sm">Salir</a></div></div>
+        
+        <div class="row mb-4">
+            <div class="col-md-4"><div class="card p-3 text-center"><h6>Usuarios Totales</h6><h2 class="text-primary" th:text="${statUsuarios}">0</h2></div></div>
+            <div class="col-md-4"><div class="card p-3 text-center"><h6>Grupos Activos</h6><h2 class="text-success" th:text="${statGrupos}">0</h2></div></div>
+            <div class="col-md-4"><div class="card p-3 text-center"><h6>Operaciones del Sistema</h6><h2 class="text-warning" th:text="${statAuditorias}">0</h2></div></div>
+        </div>
+
+        <!-- CONSOLA POWERSHELL AZCOPY -->
+        <div class="card p-4 mb-4 bg-dark text-white shadow-sm">
+            <h5 class="fw-bold"><i class="fas fa-terminal"></i> Consola Azure PowerShell (AzCopy)</h5>
+            <p class="small text-muted mb-2">Ejecuta comandos de migración masiva como Administrador.</p>
+            <form action="/admin/powershell" method="POST">
+                <div class="input-group mb-2">
+                    <span class="input-group-text bg-black text-success border-secondary">PS ></span>
+                    <input type="text" name="comando" class="form-control bg-black text-success border-secondary" placeholder="azcopy copy 'C:\NAS' 'https://stgnascorp01.blob.core.windows.net/' --recursive" required>
+                    <button type="submit" class="btn btn-success">Ejecutar</button>
+                </div>
+            </form>
+            <pre th:if="${resultadoConsola}" class="text-success mt-2 mb-0" style="background: #000; padding: 15px; border-radius: 5px; white-space: pre-wrap;" th:text="${resultadoConsola}"></pre>
+        </div>
+
+        <div class="row">
+            <div class="col-md-5">
+                <div class="card p-4 h-100">
+                    <h5 class="fw-bold">Distribución Global</h5>
+                    <canvas id="adminChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="col-md-7">
+                <div class="card p-4 mb-3">
+                    <h5 class="fw-bold"><i class="fas fa-user-plus text-primary"></i> Crear Usuario</h5>
+                    <form action="/admin/crear-usuario" method="POST" class="row g-2">
+                        <div class="col-md-4"><input type="text" name="nombres" class="form-control" placeholder="Nombres" required></div>
+                        <div class="col-md-3"><input type="email" name="correo" class="form-control" placeholder="Correo" required></div>
+                        <div class="col-md-3"><input type="password" name="password" class="form-control" placeholder="Contraseña" required></div>
+                        <div class="col-md-2"><button type="submit" class="btn btn-danger w-100">Crear</button></div>
+                    </form>
+                </div>
+                
+                <div class="card p-4">
+                    <h5 class="fw-bold"><i class="fas fa-users text-success"></i> Crear Grupo</h5>
+                    <form action="/admin/crear-grupo" method="POST" class="row g-2">
+                        <div class="col-md-5"><input type="text" name="nombreGrupo" class="form-control" placeholder="Nombre del grupo" required></div>
+                        <div class="col-md-5">
+                            <select name="usuariosIds" class="form-select" multiple style="height: 38px;">
+                                <option th:each="u : ${usuarios}" th:value="${u.id_usuario}" th:text="${u.nombres}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-2"><button type="submit" class="btn btn-success w-100">Crear</button></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="card p-4 mt-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold m-0">Últimos Registros de Auditoría</h5>
+                <a href="/admin/exportar-auditoria" class="btn btn-success"><i class="fas fa-file-excel"></i> Exportar a Excel</a>
+            </div>
+            <table class="table table-sm table-hover mb-0">
+                <thead><tr><th>Fecha</th><th>Acción</th><th>Descripción</th><th>Hash</th></tr></thead>
+                <tbody>
+                    <tr th:each="l : ${logs}">
+                        <td th:text="${#temporals.format(l.fecha, 'dd/MM/yyyy HH:mm')}"></td>
+                        <td th:text="${l.accion}"></td>
+                        <td th:text="${l.descripcion}"></td>
+                        <td><small class="text-muted" th:text="${l.hash_integridad}"></small></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Gráfico Exclusivo del Admin (Dona) -->
+    <script th:inline="javascript">
+        const ctx = document.getElementById('adminChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Usuarios', 'Grupos', 'Operaciones'],
+                datasets: [{
+                    data: [
+                        /*[[${statUsuarios}]]*/ 0, 
+                        /*[[${statGrupos}]]*/ 0, 
+                        /*[[${statAuditorias}]]*/ 0
+                    ],
+                    backgroundColor: ['#0d6efd', '#198754', '#ffc107'],
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+    </script>
+</body>
+</html>
