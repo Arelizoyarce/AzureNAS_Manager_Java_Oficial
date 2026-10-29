@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8"><title>Transferencias</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f6f9; margin: 0; }
+        .sidebar { width: 250px; background-color: #eef2f7; min-height: 100vh; border-right: 1px solid #dee2e6; position: fixed; }
+        .sidebar .nav-link { color: #333; padding: 15px 20px; font-weight: 500; border-left: 4px solid transparent; }
+        .sidebar .nav-link.active { background-color: #e2e8f0; border-left: 4px solid #0b3d91; color: #0b3d91; }
+        .main-content { margin-left: 250px; padding: 20px; }
+        .topbar { background-color: #0b3d91; color: white; padding: 15px 20px; border-radius: 8px; display: flex; justify-content: space-between; margin-bottom: 20px;}
+        .dropzone { border: 2px dashed #0b3d91; background: #f8fbff; padding: 40px; text-align: center; border-radius: 8px; margin-bottom: 20px;}
+    </style>
+</head>
+<body>
+    <div class="sidebar d-flex flex-column">
+        <div class="p-3 mb-3 border-bottom"><h5 class="fw-bold" style="color: #0b3d91;"><i class="fas fa-cloud"></i> AzureNAS</h5></div>
+        <ul class="nav flex-column">
+            <li class="nav-item"><a class="nav-link" href="/dashboard"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li class="nav-item"><a class="nav-link" href="/explorador"><i class="fas fa-folder-open"></i> Explorador</a></li>
+            <li class="nav-item"><a class="nav-link" href="/busqueda"><i class="fas fa-search"></i> Búsqueda</a></li>
+            <li class="nav-item"><a class="nav-link active" href="/transferencias"><i class="fas fa-exchange-alt"></i> Transferencias</a></li>
+            <li class="nav-item"><a class="nav-link" href="/auditoria"><i class="fas fa-history"></i> Auditoría</a></li>
+            
+            <li class="nav-item" sec:authorize="hasRole('ADMINISTRADOR')">
+                <a class="nav-link" href="/admin"><i class="fas fa-user-shield"></i> Panel Admin</a>
+            </li>
+        </ul>
+    </div>
+    <div class="main-content">
+        <div class="topbar"><div><i class="fas fa-exchange-alt"></i> Subida de Archivos</div><div><a href="/logout" class="btn btn-outline-light btn-sm">Salir</a></div></div>
+        
+        <div th:if="${mensajeExito}" class="alert alert-success fw-bold" th:text="${mensajeExito}"></div>
+
+        <div class="dropzone">
+            <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+            <h5>Selecciona un archivo de tu PC</h5>
+            <form action="/subir-archivo-real" method="POST" enctype="multipart/form-data">
+                <input type="file" name="archivo" class="form-control mb-3" style="max-width: 400px; margin: 0 auto;" required>
+                <button type="submit" class="btn btn-primary" style="background-color: #0b3d91;">Subir a Azure</button>
+            </form>
+        </div>
+
+        <div class="card shadow-sm mt-4">
+            <div class="card-header bg-white fw-bold"><i class="fas fa-folder-open text-warning"></i> Archivos Subidos</div>
+            <div class="card-body">
+                <table class="table table-hover mb-0">
+                    <thead><tr><th>ARCHIVO</th><th>ESTADO</th></tr></thead>
+                    <tbody>
+                        <tr th:each="a : ${archivosSubidos}">
+                            <td th:text="${a}"></td>
+                            <td><span class="badge bg-success">Subido</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p th:if="${#lists.isEmpty(archivosSubidos)}" class="text-muted mt-3 mb-0">No hay archivos subidos aún.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
