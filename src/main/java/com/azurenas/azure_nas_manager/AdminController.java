@@ -76,7 +76,7 @@ public class AdminController {
         return "redirect:/admin?grupoCreado";
     }
 
-    // EXPORTAR A EXCEL
+    // EXPORTAR AUDITORIA A EXCEL
     @GetMapping("/admin/exportar-auditoria")
     public void exportarAuditoria(HttpServletResponse response) throws IOException {
         List<Auditoria> logs = audRepo.findAllByOrderByFechaDesc();
