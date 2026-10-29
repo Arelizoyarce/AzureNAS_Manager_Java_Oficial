@@ -77,6 +77,9 @@ public class AdminController {
     }
 
     // EXPORTAR AUDITORIA A EXCEL
+    
+    // EXPORTAR A EXCEL
+
     @GetMapping("/admin/exportar-auditoria")
     public void exportarAuditoria(HttpServletResponse response) throws IOException {
         List<Auditoria> logs = audRepo.findAllByOrderByFechaDesc();

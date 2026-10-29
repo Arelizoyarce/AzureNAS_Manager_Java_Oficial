@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<<<<<<< HEAD
 <html xmlns:th="http://www.thymeleaf.org">
 <head><meta charset="UTF-8"><title>Login</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>body{background:#f4f6f9;display:flex;justify-content:center;align-items:center;height:100vh;}.card{border-top:5px solid #0b3d91;}</style></head>
@@ -9,3 +10,81 @@
 <label>Contraseña:</label><input type="password" name="password" class="form-control mb-3" required>
 <button type="submit" class="btn btn-primary w-100" style="background:#0b3d91;">Ingresar</button>
 </form></div></body></html>
+=======
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login | AzureNAS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --azure: #0b3d91; --azure-dark: #072a66; --azure-light: #1e6fd9; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; }
+        .login-box { display: flex; width: 100%; max-width: 880px; background: #fff; border-radius: 18px; overflow: hidden; box-shadow: 0 15px 40px rgba(11,61,145,.18); }
+        .brand-panel { flex: 1; background: linear-gradient(145deg, var(--azure-dark), var(--azure) 55%, var(--azure-light)); color: #fff; padding: 48px 36px; display: flex; flex-direction: column; justify-content: center; text-align: center; }
+        .brand-panel i.main { font-size: 3.5rem; margin-bottom: 18px; }
+        .brand-panel h2 { font-weight: 800; }
+        .brand-panel p { opacity: .85; }
+        .form-panel { flex: 1; padding: 48px 40px; }
+        .form-control { padding: 12px 14px; border-radius: 10px; }
+        .input-group-text { background: #f1f5fb; border-radius: 10px 0 0 10px; color: var(--azure); }
+        .input-group .form-control { border-radius: 0 10px 10px 0; }
+        .btn-login { background: var(--azure); border: 0; color: #fff; padding: 12px; border-radius: 10px; font-weight: 600; transition: background .2s, transform .2s; }
+        .btn-login:hover { background: var(--azure-dark); color: #fff; transform: translateY(-1px); }
+        .toggle-pass { cursor: pointer; border-radius: 0 10px 10px 0 !important; }
+        @media (max-width: 767px) { .brand-panel { display: none; } .form-panel { padding: 36px 24px; } }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <div class="brand-panel">
+            <i class="fas fa-cloud main"></i>
+            <h2>AzureNAS</h2>
+            <p>Gestor de almacenamiento corporativo en la nube.</p>
+        </div>
+
+        <div class="form-panel">
+            <h3 class="fw-bold mb-1" style="color: var(--azure);">Bienvenido</h3>
+            <p class="text-muted mb-4">Ingresa tus credenciales para continuar</p>
+
+            <div th:if="${param.error}" class="alert alert-danger py-2">
+                <i class="fas fa-circle-exclamation me-1"></i> Correo o contraseña incorrectos.
+            </div>
+            <div th:if="${param.logout}" class="alert alert-success py-2">
+                <i class="fas fa-circle-check me-1"></i> Sesión cerrada correctamente.
+            </div>
+
+            <form action="/login" method="POST">
+                <label class="form-label fw-semibold">Correo</label>
+                <div class="input-group mb-3">
+                    <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                    <input type="email" name="username" class="form-control" placeholder="usuario@empresa.com" required autofocus>
+                </div>
+
+                <label class="form-label fw-semibold">Contraseña</label>
+                <div class="input-group mb-4">
+                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
+                    <span class="input-group-text toggle-pass" onclick="verPassword()"><i class="fas fa-eye" id="ojo"></i></span>
+                </div>
+
+                <button type="submit" class="btn btn-login w-100"><i class="fas fa-right-to-bracket me-2"></i>Ingresar</button>
+            </form>
+
+            <div class="text-center mt-4"><a href="/" class="text-decoration-none small text-muted"><i class="fas fa-arrow-left me-1"></i>Volver al inicio</a></div>
+        </div>
+    </div>
+
+    <script>
+        function verPassword() {
+            const p = document.getElementById('password');
+            const o = document.getElementById('ojo');
+            const oculto = p.type === 'password';
+            p.type = oculto ? 'text' : 'password';
+            o.className = oculto ? 'fas fa-eye-slash' : 'fas fa-eye';
+        }
+    </script>
+</body>
+</html>
+>>>>>>> 657b5a7cb1bf8cf6b16536a1095409890b7b8cc2

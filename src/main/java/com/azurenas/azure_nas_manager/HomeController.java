@@ -91,7 +91,7 @@ public class HomeController {
         if (usuarioLogueado != null) {
             misGrupos = grupoRepository.findAll().stream()
                 .filter(g -> (g.getMiembros() != null && g.getMiembros().contains(usuarioLogueado))
-                          || (g.getCreador() != null && g.getCreador().equals(usuarioLogueado)))
+                        || (g.getCreador() != null && g.getCreador().equals(usuarioLogueado)))
                 .toList();
         }
         model.addAttribute("misGrupos", misGrupos);
@@ -139,7 +139,6 @@ public class HomeController {
         return "redirect:/dashboard?grupoCreado";
     }
 
-    // VALIDACIÓN: SOLO CREADOR O ADMIN PUEDEN AÑADIR
     @PostMapping("/grupo/agregar-miembro")
     public String agregarMiembro(@RequestParam Long grupoId, @RequestParam Long usuarioId, Authentication auth, RedirectAttributes ra) {
         Grupo g = grupoRepository.findById(grupoId).orElse(null);
@@ -162,7 +161,6 @@ public class HomeController {
         return "redirect:/dashboard";
     }
 
-    // VALIDACIÓN: SOLO CREADOR O ADMIN PUEDEN QUITAR
     @PostMapping("/grupo/quitar-miembro")
     public String quitarMiembro(@RequestParam Long grupoId, @RequestParam Long usuarioId, Authentication auth, RedirectAttributes ra) {
         Grupo g = grupoRepository.findById(grupoId).orElse(null);
@@ -242,7 +240,7 @@ public class HomeController {
         if (usuarioLogueado != null) {
             misGrupos = grupoRepository.findAll().stream()
                 .filter(g -> (g.getMiembros() != null && g.getMiembros().contains(usuarioLogueado))
-                          || (g.getCreador() != null && g.getCreador().equals(usuarioLogueado)))
+                        || (g.getCreador() != null && g.getCreador().equals(usuarioLogueado)))
                 .toList();
             for (Grupo g : misGrupos) {
                 Path groupDir = rootLocation.resolve("grupo_" + g.getId_grupo());
